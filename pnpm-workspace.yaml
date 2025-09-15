@@ -1,0 +1,4 @@
+packages:
+  - "users-app"
+  - "admin-app"
+  - "shared"

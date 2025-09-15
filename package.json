@@ -1,0 +1,10 @@
+{
+  "name": "matobev",
+  "private": true,
+  "version": "0.1.0",
+  "scripts": {
+    "build:shared": "pnpm --filter @matobev/shared build",
+    "dev:users": "pnpm --dir users-app dev",
+    "dev:admin": "pnpm --dir admin-app dev"
+  }
+}
