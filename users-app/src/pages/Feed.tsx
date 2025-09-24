@@ -1,15 +1,15 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import * as React from 'react';
 import { supabase } from '../lib/supabaseClient';
 import TopNav from '../components/layout/TopNav';
 import { Sidebar } from '../components/layout/Sidebar';
 import PlayableVideoCard from '../components/ui/PlayableVideoCard';
-import { Heart, MessageCircle, Share, MoreHorizontal, Play, Pause } from 'lucide-react';
+import { Heart, MessageCircle, Share, MoreHorizontal, Play } from 'lucide-react';
 
 interface Profile {
   id: string;
   full_name?: string | null;
   avatar_url?: string | null;
-  role?: string | null;
+  role: string;
   country?: string;
 }
 
@@ -32,6 +32,7 @@ interface Video {
 
 interface Comment {
   id: string;
+  video_id: string;
   user_id: string;
   content: string;
   created_at: string;
@@ -42,15 +43,15 @@ interface Comment {
 }
 
 export default function Feed() {
-  const [profile, setProfile] = useState<Profile | null>(null);
-  const [videos, setVideos] = useState<Video[]>([]);
-  const [likes, setLikes] = useState<Record<string, number>>({});
-  const [likedByMe, setLikedByMe] = useState<Record<string, boolean>>({});
-  const [comments, setComments] = useState<Record<string, Comment[]>>({});
-  const [loading, setLoading] = useState(true);
-  const [likingVideos, setLikingVideos] = useState<Set<string>>(new Set());
+  const [profile, setProfile] = React.useState<Profile | null>(null);
+  const [videos, setVideos] = React.useState<Video[]>([]);
+  const [likes, setLikes] = React.useState<Record<string, number>>({});
+  const [likedByMe, setLikedByMe] = React.useState<Record<string, boolean>>({});
+  const [comments, setComments] = React.useState<Record<string, Comment[]>>({});
+  const [loading, setLoading] = React.useState(true);
+  const [likingVideos, setLikingVideos] = React.useState<Set<string>>(new Set());
 
-  const loadProfile = useCallback(async () => {
+  const loadProfile = React.useCallback(async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
@@ -71,7 +72,7 @@ export default function Feed() {
     }
   }, []);
 
-  const loadVideos = useCallback(async () => {
+  const loadVideos = React.useCallback(async () => {
     try {
       const { data, error } = await supabase
         .from('videos')
@@ -89,7 +90,7 @@ export default function Feed() {
     }
   }, []);
 
-  const loadLikesAndComments = useCallback(async (videoIds: string[]) => {
+  const loadLikesAndComments = React.useCallback(async (videoIds: string[]) => {
     if (!profile?.id || videoIds.length === 0) return;
 
     try {
@@ -141,7 +142,7 @@ export default function Feed() {
     }
   }, [profile?.id]);
 
-  useEffect(() => {
+  React.useEffect(() => {
     const loadData = async () => {
       setLoading(true);
       await loadProfile();
@@ -151,27 +152,27 @@ export default function Feed() {
     loadData();
   }, [loadProfile, loadVideos]);
 
-  useEffect(() => {
+  React.useEffect(() => {
     if (videos.length > 0) {
-      const videoIds = videos.map(v => v.id);
+      const videoIds = videos.map((v: Video) => v.id);
       loadLikesAndComments(videoIds);
     }
   }, [videos, loadLikesAndComments]);
 
   // Real-time subscriptions
-  useEffect(() => {
+  React.useEffect(() => {
     const channel = supabase.channel('realtime-feed')
       .on('postgres_changes', 
         { event: 'INSERT', schema: 'public', table: 'videos' }, 
-        (payload) => {
-          setVideos(prev => [payload.new as Video, ...prev]);
+        (payload: any) => {
+          setVideos((prev: Video[]) => [payload.new as Video, ...prev]);
         }
       )
       .on('postgres_changes', 
         { event: '*', schema: 'public', table: 'video_likes' }, 
-        (payload) => {
-          const videoId = (payload.new as any)?.video_id ?? (payload.old as any)?.video_id;
-          setLikes(prev => {
+        (payload: any) => {
+          const videoId = payload.new?.video_id ?? payload.old?.video_id;
+          setLikes((prev: Record<string, number>) => {
             const current = prev[videoId] || 0;
             if (payload.eventType === 'INSERT') {
               return { ...prev, [videoId]: current + 1 };
@@ -184,9 +185,9 @@ export default function Feed() {
       )
       .on('postgres_changes', 
         { event: 'INSERT', schema: 'public', table: 'video_comments' }, 
-        (payload) => {
+        (payload: any) => {
           const comment = payload.new as Comment;
-          setComments(prev => ({
+          setComments((prev: Record<string, Comment[]>) => ({
             ...prev,
             [comment.video_id]: [...(prev[comment.video_id] || []), comment]
           }));
@@ -202,15 +203,15 @@ export default function Feed() {
   const toggleLike = async (videoId: string) => {
     if (!profile || likingVideos.has(videoId)) return;
     
-    setLikingVideos(prev => new Set(prev).add(videoId));
+    setLikingVideos((prev: Set<string>) => new Set(prev).add(videoId));
     
     try {
       const currentlyLiked = !!likedByMe[videoId];
       const currentLikeCount = likes[videoId] || 0;
       
       // Update local state optimistically
-      setLikedByMe(prev => ({ ...prev, [videoId]: !currentlyLiked }));
-      setLikes(prev => ({ 
+      setLikedByMe((prev: Record<string, boolean>) => ({ ...prev, [videoId]: !currentlyLiked }));
+      setLikes((prev: Record<string, number>) => ({ 
         ...prev, 
         [videoId]: currentlyLiked ? Math.max(0, currentLikeCount - 1) : currentLikeCount + 1 
       }));
@@ -237,13 +238,13 @@ export default function Feed() {
       const currentlyLiked = !!likedByMe[videoId];
       const currentLikeCount = likes[videoId] || 0;
       
-      setLikedByMe(prev => ({ ...prev, [videoId]: currentlyLiked }));
-      setLikes(prev => ({ 
+      setLikedByMe((prev: Record<string, boolean>) => ({ ...prev, [videoId]: currentlyLiked }));
+      setLikes((prev: Record<string, number>) => ({ 
         ...prev, 
         [videoId]: currentlyLiked ? currentLikeCount + 1 : Math.max(0, currentLikeCount - 1)
       }));
     } finally {
-      setLikingVideos(prev => {
+      setLikingVideos((prev: Set<string>) => {
         const newSet = new Set(prev);
         newSet.delete(videoId);
         return newSet;
@@ -290,9 +291,9 @@ export default function Feed() {
 
   return (
     <div className="flex min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
-      <Sidebar profile={profile} />
+      <Sidebar profile={profile!} />
       <div className="flex-1 flex flex-col">
-        <TopNav profile={profile} />
+        <TopNav profile={profile!} />
         <main className="flex-1 p-6">
           <div className="max-w-4xl mx-auto">
             {/* Header */}
@@ -319,11 +320,10 @@ export default function Feed() {
               </div>
             ) : (
               <div className="space-y-6">
-                {videos.map((video) => (
+                {videos.map((video: Video) => (
                   <VideoCard
                     key={video.id}
                     video={video}
-                    profile={profile}
                     likes={likes[video.id] || 0}
                     likedByMe={!!likedByMe[video.id]}
                     comments={comments[video.id] || []}
@@ -343,20 +343,20 @@ export default function Feed() {
 
 interface VideoCardProps {
   video: Video;
-  profile: Profile;
   likes: number;
   likedByMe: boolean;
   comments: Comment[];
   onLike: () => void;
   onComment: (content: string) => void;
   isLiking: boolean;
+  key?: string;
 }
 
-function VideoCard({ video, profile, likes, likedByMe, comments, onLike, onComment, isLiking }: VideoCardProps) {
-  const [showComments, setShowComments] = useState(false);
-  const [commentText, setCommentText] = useState('');
+function VideoCard({ video, likes, likedByMe, comments, onLike, onComment, isLiking }: VideoCardProps) {
+  const [showComments, setShowComments] = React.useState(false);
+  const [commentText, setCommentText] = React.useState('');
 
-  const handleCommentSubmit = (e: React.FormEvent) => {
+  const handleCommentSubmit = (e: any) => {
     e.preventDefault();
     if (commentText.trim()) {
       onComment(commentText);
