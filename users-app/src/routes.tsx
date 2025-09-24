@@ -12,6 +12,9 @@ import Profile from "./pages/Profile";
 import News from "./pages/News";
 import Trials from "./pages/Trials";
 import Feed from "./pages/Feed";
+import VideoAnalysis from "./pages/VideoAnalysis";
+import Analytics from "./pages/Analytics";
+import TrialCalendar from "./components/calendar/TrialCalendar";
 
 export const router = createBrowserRouter([
   { path: "/", element: <Landing /> },
@@ -27,4 +30,7 @@ export const router = createBrowserRouter([
   { path: "/news", element: <News /> },
   { path: "/trials", element: <Trials /> },
   { path: "/feed", element: <Feed /> },
+  { path: "/video-analysis", element: <VideoAnalysis /> },
+  { path: "/analytics", element: <Analytics /> },
+  { path: "/calendar", element: <TrialCalendar /> },
 ]);
