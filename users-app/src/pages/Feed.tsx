@@ -73,13 +73,13 @@ export default function Feed() {
 
   const toggleLike = async (videoId: string) => {
     if (!profile) return;
-    const liked = !!likedByMe[videoId];
-    setLikedByMe(prev => ({ ...prev, [videoId]: !liked }));
-    setLikes(prev => ({ ...prev, [videoId]: (prev[videoId] || 0) + (liked ? -1 : 1) }));
-    if (liked) {
-      await supabase.from("video_likes").delete().eq("video_id", videoId).eq("user_id", profile.id);
-    } else {
-      await supabase.from("video_likes").insert({ video_id: videoId, user_id: profile.id });
+      const liked = !!likedByMe[videoId];
+      setLikedByMe(prev => ({ ...prev, [videoId]: !liked }));
+      setLikes(prev => ({ ...prev, [videoId]: (prev[videoId] || 0) + (liked ? -1 : 1) }));
+                if (liked) {
+                  await supabase.from("video_likes").delete().eq("video_id", videoId).eq("user_id", profile.id);
+                } else {
+                  await supabase.from("video_likes").insert({ video_id: videoId, user_id: profile.id });
     }
   };
 
@@ -122,21 +122,21 @@ export default function Feed() {
                   Like {likes[v.id] ? `(${likes[v.id]})` : ""}
                 </button>
               </div>
-              <div className="mt-3">
+                  <div className="mt-3">
                 <div className="text-sm font-medium mb-1">Comments</div>
                 <div className="space-y-2">
                   {(comments[v.id] || []).map((c: any) => (
                     <div key={c.id} className="text-sm">
                       <span className="font-semibold">{c.user_id.slice(0,6)}</span>: {c.content}
-                    </div>
-                  ))}
+                        </div>
+                      ))}
                 </div>
                 <CommentInput onSubmit={(text) => addComment(v.id, text)} />
               </div>
             </div>
           ))}
         </main>
-      </div>
+        </div>
     </div>
   );
 }
